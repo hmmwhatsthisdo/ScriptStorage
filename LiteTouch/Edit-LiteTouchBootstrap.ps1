@@ -25,6 +25,9 @@ Param(
     [System.Management.Automation.CredentialAttribute()]
     [pscredential]$DeploymentShareCredential,
 
+	[System.Management.Automation.CredentialAttribute()]
+    [pscredential]$DomainJoinCredential,
+	
     [hashtable]$DefaultParameters,
 
     [ValidateScript({
@@ -94,6 +97,19 @@ Process {
             $IniDefaultSection["UserDomain"] = $DeploymentShareNetCredential.Domain
 
         }
+		
+		If ($DomainJoinCredential) {
+
+
+            $DomainJoinNetCredential = $DomainJoinCredential.GetNetworkCredential()
+            Write-Verbose "Injecting domain credentials for $($DomainJoinNetCredential.Domain)\$($DomainJoinNetCredential.UserName)..."
+
+            $IniDefaultSection["DomainAdmin"] = $DomainJoinNetCredential.UserName
+            $IniDefaultSection["DomainAdminPassword"] = $DomainJoinNetCredential.Password
+            $IniDefaultSection["DomainAdminDomain"] = $DomainJoinNetCredential.Domain
+
+        }
+		
         If ($DefaultParameters) {
 
             Write-Verbose "Injecting parameters into section [Default]..."
