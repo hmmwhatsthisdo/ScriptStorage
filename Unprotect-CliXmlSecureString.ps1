@@ -15,6 +15,7 @@ function Unprotect-CliXmlSecureString {
     )
     
     begin {
+        Add-Type -AssemblyName System.Security | Out-Null
     }
     
     process {
@@ -29,7 +30,7 @@ function Unprotect-CliXmlSecureString {
             Select-Xml -Xml $XMLDocument -XPath "//powershell:SS" -Namespace @{powershell = "http://schemas.microsoft.com/powershell/2004/04"} | ForEach-Object {
 
                 # Try to avoid holding onto the unprotected data in memory as much as we can
-                $_.Node.InnerText = [System.Security.Cryptography.ProtectedData]::Protect(
+                $_.Node.InnerText = ([System.Security.Cryptography.ProtectedData]::Protect(
                     [System.Security.Cryptography.ProtectedData]::Unprotect(
                         ($_.Node.InnerText -split '(..)' | Where-Object Length | ForEach-Object {[Convert]::ToByte($_, 16)}),
                         $null,
@@ -37,7 +38,7 @@ function Unprotect-CliXmlSecureString {
                     ), 
                     $null, 
                     [System.Security.Cryptography.DataProtectionScope]::LocalMachine
-                )
+                ) | ForEach-Object ToString 'x2') -join ''
 
             }
             $XMLDocument.Save($XMLFile.FullName)
